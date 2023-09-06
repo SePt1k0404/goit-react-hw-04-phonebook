@@ -1,66 +1,54 @@
-import { Component } from 'react';
+import { useState } from 'react';
 import { PhoneBookForm } from './PhoneBookForm/PhoneBookForm';
 import { Contacts } from './Contacts/Contacts';
 import { ContactsFilter } from './Contacts/ContactsFilter';
+import { useEffect } from 'react';
 
-export class App extends Component {
-  state = {
-    contacts: [],
-    filter: '',
-  };
-  CONTACTS_KEY = 'contacts';
-  componentDidMount() {
-    if (localStorage.getItem(this.CONTACTS_KEY) !== null) {
-      this.setState({
-        contacts: JSON.parse(localStorage.getItem(this.CONTACTS_KEY)),
-      });
+export const App = () => {
+  const CONTACTS_KEY = 'contacts';
+  const [contacts, setContacts] = useState(
+    JSON.parse(localStorage.getItem(CONTACTS_KEY)) ?? []
+  );
+  const [filter, setFilter] = useState('');
+
+  useEffect(() => {
+    if (localStorage.getItem(CONTACTS_KEY) !== null) {
+      setContacts(JSON.parse(localStorage.getItem(CONTACTS_KEY)));
     }
-  }
-  componentDidUpdate() {
-    localStorage.setItem(
-      this.CONTACTS_KEY,
-      JSON.stringify(this.state.contacts)
-    );
-  }
-  handlerChange = evt => {
-    this.setState({
-      [evt.target.name]: evt.target.value,
-    });
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem(CONTACTS_KEY, JSON.stringify(contacts));
+  }, [contacts]);
+
+  const handlerChange = evt => {
+    setFilter(evt.target.value);
   };
-  changeInfo = info => {
-    if (this.state.contacts.some(el => el.name === info.name)) {
+
+  const changeInfo = info => {
+    if (contacts.some(el => el.name === info.name)) {
       alert(`${info.name} is already in contacts.`);
     } else {
-      this.setState(prevState => {
-        return {
-          filter: '',
-          contacts: [...prevState.contacts, info],
-        };
-      });
+      setContacts(prevState => [...prevState, info]);
     }
   };
-  deleteContact = evt => {
-    this.setState(prevState => {
-      return {
-        contacts: prevState.contacts.filter(el => el.name !== evt.target.value),
-      };
-    });
+
+  const deleteContact = evt => {
+    setContacts(prevState =>
+      prevState.filter(el => el.name !== evt.target.value)
+    );
   };
-  render() {
-    const visibleName = this.state.contacts.filter(el =>
-      el.name.toLowerCase().includes(this.state.filter.toLowerCase())
-    );
-    return (
-      <>
-        <h2 style={{ marginLeft: '20px' }}>Phonebook</h2>
-        <PhoneBookForm onChangeInfo={this.changeInfo} />
-        <h2 style={{ marginLeft: '20px' }}>Contacts</h2>
-        <ContactsFilter
-          filter={this.state.filter}
-          handlerChange={this.handlerChange}
-        />
-        <Contacts contacts={visibleName} deleteContact={this.deleteContact} />
-      </>
-    );
-  }
-}
+
+  const visibleName = contacts.filter(el =>
+    el.name.toLowerCase().includes(filter.toLowerCase())
+  );
+  return (
+    <>
+      <h2 style={{ marginLeft: '20px' }}>Phonebook</h2>
+      <PhoneBookForm onChangeInfo={changeInfo} />
+      <h2 style={{ marginLeft: '20px' }}>Contacts</h2>
+      <ContactsFilter filter={filter} handlerChange={handlerChange} />
+      <Contacts contacts={visibleName} deleteContact={deleteContact} />
+    </>
+  );
+};
